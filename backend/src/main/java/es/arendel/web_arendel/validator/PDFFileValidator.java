@@ -40,7 +40,7 @@ public class PDFFileValidator implements ConstraintValidator<ValidJobPDF, Multip
             return false;
         }
 
-        // Validar extensión del nombre del archivo, mejorada
+        // Validar extensión del nombre del archivo
         String originalFilename = file.getOriginalFilename();
         if (originalFilename == null || !originalFilename.matches(".*\\.pdf$")) {
             context.disableDefaultConstraintViolation();

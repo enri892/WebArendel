@@ -31,6 +31,7 @@ public class EmailService {
     private String uploadDirectory;
 
     public boolean sendJobApplicationEmail(JobApplicationDTO application, String savedFileName) {
+        boolean emailSent = false;
         try {
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
@@ -57,7 +58,7 @@ public class EmailService {
             // Enviar email
             mailSender.send(message);
             logger.info("Email enviado exitosamente para solicitud de: {}", application.getEmail());
-            return true;
+            emailSent = true;
 
         } catch (MessagingException e) {
             logger.error("Error al enviar email para solicitud de: {}", application.getEmail(), e);
@@ -65,6 +66,33 @@ public class EmailService {
         } catch (Exception e) {
             logger.error("Error inesperado al enviar email", e);
             return false;
+        }finally {
+
+            // Eliminar archivo después de enviar el correo (si existe)
+            if (savedFileName != null && !savedFileName.isEmpty()) {
+                deleteFile(savedFileName);
+            }
+        }
+        return emailSent;
+    }
+
+    /**
+     * Elimina el archivo del servidor
+     */
+    private void deleteFile(String fileName) {
+        try {
+            Path filePath = Paths.get(uploadDirectory, fileName);
+            File file = filePath.toFile();
+
+            if (file.exists()) {
+                if (file.delete()) {
+                    logger.info("Archivo eliminado exitosamente: {}", fileName);
+                } else {
+                    logger.warn("No se pudo eliminar el archivo: {}", fileName);
+                }
+            }
+        } catch (Exception e) {
+            logger.error("Error al intentar eliminar el archivo: {}", fileName, e);
         }
     }
 
@@ -81,12 +109,8 @@ public class EmailService {
                 .append("<li><strong>Email:</strong> ").append(application.getEmail()).append("</li>")
                 .append("<li><strong>Teléfono:</strong> ").append(application.getTelefono()).append("</li>")
                 .append("<li><strong>Tipo de Contrato Solicitado:</strong> ").append(getContratoDescription(application.getContrato())).append("</li>")
+                .append("<li><strong>Localidad:</strong>").append(application.getLocalidad()).append("</li>")
                 .append("</ul>");
-
-        if (application.getExperiencia() != null && !application.getExperiencia().trim().isEmpty()) {
-            content.append("<p><strong>Experiencia:</strong></p>")
-                    .append("<p>").append(application.getExperiencia()).append("</p>");
-        }
 
         if (application.getComentarios() != null && !application.getComentarios().trim().isEmpty()) {
             content.append("<p><strong>Comentarios Adicionales:</strong></p>")
@@ -112,7 +136,7 @@ public class EmailService {
         };
     }
 
-    // Método para enviar email de confirmación al candidato
+    // Enviar email de confirmación al candidato
     public boolean sendConfirmationEmail(JobApplicationDTO application) {
         try {
             MimeMessage message = mailSender.createMimeMessage();
@@ -141,7 +165,7 @@ public class EmailService {
                 "<h2 style='color: #333;'>¡Gracias por tu interés en Arendel!</h2>" +
                 "<p>Estimado/a <strong>" + application.getNombre() + "</strong>,</p>" +
                 "<p>Hemos recibido correctamente tu solicitud de empleo para el puesto de <strong>" +
-                getContratoDescription(application.getContrato()) + "</strong>.</p>" +
+                getContratoDescription(application.getContrato()) + " en "+ application.getLocalidad() +"</strong>.</p>" +
                 "<p>Nuestro equipo de Recursos Humanos revisará tu candidatura y te contactaremos en caso de que tu perfil encaje con nuestras necesidades actuales.</p>" +
                 "<p>¡Gracias por considerar Arendel como tu próximo destino profesional!</p>" +
                 "<br>" +

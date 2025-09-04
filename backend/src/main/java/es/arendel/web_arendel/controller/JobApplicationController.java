@@ -49,7 +49,7 @@ public class JobApplicationController {
 
             if (result) {
                 response.put("success", true);
-                response.put("message", "Solicitud enviada exitosamente");
+                response.put("message", "Solicitud enviada con éxito");
                 return ResponseEntity.ok(response);
             } else {
                 response.put("success", false);
@@ -59,7 +59,7 @@ public class JobApplicationController {
 
         } catch (Exception e) {
             response.put("success", false);
-            response.put("message", "Error inesperado: " + e.getMessage());
+            response.put("message", "Error inesperado");
             return ResponseEntity.internalServerError().body(response);
         }
     }

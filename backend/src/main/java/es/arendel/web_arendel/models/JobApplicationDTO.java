@@ -28,9 +28,10 @@ public class JobApplicationDTO {
     @Pattern(regexp = "^(20-horas|30-horas|40-horas)$", message = "Tipo de contrato inválido")
     private String contrato;
 
-    //Experiencia (Opcional)
-    @Size(max = 500, message = "La experiencia no puede exceder 500 caracteres")
-    private String experiencia;
+    //Localidad (Opcional)
+    @NotBlank(message = "La localidad es obligatoria")
+    @Pattern(regexp = "^(Madrid|Barcelona)$", message = "Localidad inválida")
+    private String localidad;
 
     //Comentarios adicionales (Opcional)
     @Size(max = 1000, message = "Los comentarios no pueden exceder 1000 caracteres")
@@ -56,8 +57,8 @@ public class JobApplicationDTO {
     public String getContrato() { return contrato; }
     public void setContrato(String contrato) { this.contrato = contrato; }
 
-    public String getExperiencia() { return experiencia; }
-    public void setExperiencia(String experiencia) { this.experiencia = experiencia; }
+    public String getLocalidad() { return localidad; }
+    public void setLocalidad(String localidad) { this.localidad = localidad; }
 
     public String getComentarios() { return comentarios; }
     public void setComentarios(String comentarios) { this.comentarios = comentarios; }
