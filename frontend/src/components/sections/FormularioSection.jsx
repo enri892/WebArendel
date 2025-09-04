@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   User,
   Phone,
@@ -8,7 +8,10 @@ import {
   Upload,
   MessageCircle,
   Send,
-  CheckCircle
+  CheckCircle,
+  AlertCircle,
+  X,
+  Loader
 } from 'lucide-react';
 
 const FormularioSection = ({ selectedContract, onContractChange }) => {
@@ -23,6 +26,12 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
     comentarios: ''
   });
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [apiResponse, setApiResponse] = useState(null);
+  const [file, setFile] = useState(null);
+  
+  // Referencia para el mensaje de respuesta
+  const responseRef = useRef(null);
 
   // Cargar datos del localStorage al montar el componente
   useEffect(() => {
@@ -79,6 +88,19 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
     }
   }, [selectedContract, isLoaded, onContractChange]);
 
+  // Efecto para desplazar hacia el mensaje de respuesta cuando haya uno
+  useEffect(() => {
+    if (apiResponse && responseRef.current) {
+      // Pequeño retraso para permitir que el mensaje se renderice completamente
+      setTimeout(() => {
+        responseRef.current.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center'
+        });
+      }, 100);
+    }
+  }, [apiResponse]);
+
   const handleInputChange = (field, value) => {
     setFormData(prev => ({
       ...prev,
@@ -89,38 +111,158 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
     if (field === 'contrato' && onContractChange) {
       onContractChange(value);
     }
-  };
 
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file && file.type === 'application/pdf') {
-      setFormData(prev => ({
+    // Limpiar errores cuando el usuario modifique campos
+    if (apiResponse && !apiResponse.success && apiResponse.errors && apiResponse.errors[field]) {
+      setApiResponse(prev => ({
         ...prev,
-        curriculum: file.name
+        errors: {
+          ...prev.errors,
+          [field]: undefined
+        }
       }));
-    } else if (file) {
-      alert('Por favor, selecciona un archivo PDF válido.');
-      e.target.value = '';
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleFileChange = (e) => {
+    const selectedFile = e.target.files[0];
+    if (selectedFile) {
+      setFile(selectedFile);
+      setFormData(prev => ({
+        ...prev,
+        curriculum: selectedFile.name
+      }));
+
+      // Limpiar error de cv si existe
+      if (apiResponse && !apiResponse.success && apiResponse.errors && apiResponse.errors.cv) {
+        setApiResponse(prev => ({
+          ...prev,
+          errors: {
+            ...prev.errors,
+            cv: undefined
+          }
+        }));
+      }
+    }
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert('¡Gracias por tu interés! Nos pondremos en contacto contigo pronto.');
-    console.log('Datos del formulario:', formData);
+    setIsSubmitting(true);
+    setApiResponse(null);
 
-    // Resetear el formulario y limpiar localStorage
-    setFormData({
-      nombre: '',
-      telefono: '',
-      email: '',
-      contrato: '',
-      localidad: '',
-      curriculum: null,
-      comentarios: ''
-    });
+    try {
+      const formDataToSend = new FormData();
+      formDataToSend.append('nombre', formData.nombre);
+      formDataToSend.append('telefono', formData.telefono);
+      formDataToSend.append('email', formData.email);
+      formDataToSend.append('contrato', formData.contrato);
+      formDataToSend.append('localidad', formData.localidad);
+      formDataToSend.append('comentarios', formData.comentarios);
+      
+      if (file) {
+        formDataToSend.append('cv', file);
+      }
 
-    localStorage.removeItem('arendel_form_data');
+      const response = await fetch('http://localhost:8080/api/v1/job-applications', {
+        method: 'POST',
+        body: formDataToSend,
+      });
+
+      const result = await response.json();
+      console.log('Respuesta de la API:', result);
+      setApiResponse(result);
+
+      if (result.success) {
+        // Resetear el formulario y limpiar localStorage en caso de éxito
+        setFormData({
+          nombre: '',
+          telefono: '',
+          email: '',
+          contrato: '',
+          localidad: '',
+          curriculum: null,
+          comentarios: ''
+        });
+        setFile(null);
+        localStorage.removeItem('arendel_form_data');
+        
+        // Reset file input
+        const fileInput = document.getElementById('curriculum-input');
+        if (fileInput) fileInput.value = '';
+      }
+
+    } catch (error) {
+      console.error('Error al enviar el formulario:', error);
+      setApiResponse({
+        success: false,
+        message: 'Error de conexión. Por favor, inténtalo de nuevo.',
+        errors: {}
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const closeMessage = () => {
+    setApiResponse(null);
+  };
+
+  // Renderizar mensaje de respuesta
+  const renderResponseMessage = () => {
+    if (!apiResponse) return null;
+
+    const { success, message, errors = {} } = apiResponse;
+    const hasErrors = Object.keys(errors).length > 0;
+
+    return (
+      <div 
+        ref={responseRef} // Añadimos la referencia aquí
+        className={`flex justify-center items-center mb-8 transform transition-all duration-1000 delay-300 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}
+      >
+        <div className="relative max-w-2xl w-full">
+          <div className={`absolute -inset-0.5 ${success ? 'bg-gradient-to-r from-emerald-500 to-teal-500' : 'bg-gradient-to-r from-red-500 to-orange-500'} rounded-2xl opacity-60 blur-lg`} />
+          <div className={`relative p-4 ${success ? 'bg-gradient-to-r from-emerald-500/20 to-teal-500/20' : 'bg-gradient-to-r from-red-500/20 to-orange-500/20'} backdrop-blur-xl rounded-2xl border border-white/20`}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  {success ? (
+                    <CheckCircle className="h-5 w-5 text-emerald-400 flex-shrink-0" />
+                  ) : (
+                    <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
+                  )}
+                  <p className="text-white font-semibold m-0">
+                    {message}
+                  </p>
+                </div>
+                
+                {hasErrors && (
+                  <div className="mt-3 space-y-2">
+                    {Object.entries(errors).map(([field, error]) => (
+                      error && (
+                        <div key={field} className="flex items-center gap-2 text-sm">
+                          <div className="w-1 h-1 bg-red-400 rounded-full flex-shrink-0" />
+                          <span className="text-red-200">
+                            <strong className="capitalize">{field === 'cv' ? 'Currículum' : field}:</strong> {error}
+                          </span>
+                        </div>
+                      )
+                    ))}
+                  </div>
+                )}
+              </div>
+              
+              <button
+                onClick={closeMessage}
+                className="text-white/60 hover:text-white transition-colors p-1 rounded-full hover:bg-white/10"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -160,8 +302,8 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
           </p>
         </div>
 
-        {/* Mensaje adicional si hay un contrato pre-seleccionado - CORREGIDO EL CENTRADO */}
-        {selectedContract && (
+        {/* Mensaje de contrato pre-seleccionado */}
+        {selectedContract && !apiResponse && (
           <div className={`flex justify-center items-center mb-8 transform transition-all duration-1000 delay-300 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
             <div className="relative">
               <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl opacity-60 blur-lg" />
@@ -177,6 +319,9 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
           </div>
         )}
 
+        {/* Mensaje de respuesta de la API */}
+        {renderResponseMessage()}
+
         {/* Form Card */}
         <div className={`transform transition-all duration-1000 delay-500 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`}>
           <div className="relative">
@@ -186,7 +331,7 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
             {/* Card Background */}
             <div className="relative bg-gradient-to-br from-slate-900/80 to-blue-900/80 backdrop-blur-xl rounded-3xl border border-white/20 overflow-hidden shadow-2xl">
               <div className="p-8 lg:p-12">
-                <form onSubmit={handleSubmit} className="space-y-8">
+                <div className="space-y-8">
                   {/* Primera fila: Nombre y Teléfono */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-3">
@@ -201,7 +346,11 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
                           value={formData.nombre}
                           onChange={(e) => handleInputChange('nombre', e.target.value)}
                           required
-                          className="w-full px-4 py-4 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl text-white placeholder-white/50 focus:outline-none focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20 transition-all duration-300"
+                          className={`w-full px-4 py-4 bg-white/10 backdrop-blur-xl border rounded-2xl text-white placeholder-white/50 focus:outline-none transition-all duration-300 ${
+                            apiResponse && apiResponse.errors && apiResponse.errors.nombre
+                              ? 'border-red-400 focus:border-red-400 focus:ring-2 focus:ring-red-400/20'
+                              : 'border-white/20 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/20'
+                          }`}
                         />
                       </div>
                     </div>
@@ -214,11 +363,15 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
                       <div className="relative">
                         <input
                           type="tel"
-                          placeholder="+34 123 456 789"
+                          placeholder="+34655555555 (Sin espacios)"
                           value={formData.telefono}
                           onChange={(e) => handleInputChange('telefono', e.target.value)}
                           required
-                          className="w-full px-4 py-4 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl text-white placeholder-white/50 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all duration-300"
+                          className={`w-full px-4 py-4 bg-white/10 backdrop-blur-xl border rounded-2xl text-white placeholder-white/50 focus:outline-none transition-all duration-300 ${
+                            apiResponse && apiResponse.errors && apiResponse.errors.telefono
+                              ? 'border-red-400 focus:border-red-400 focus:ring-2 focus:ring-red-400/20'
+                              : 'border-white/20 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20'
+                          }`}
                         />
                       </div>
                     </div>
@@ -237,7 +390,11 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
                         value={formData.email}
                         onChange={(e) => handleInputChange('email', e.target.value)}
                         required
-                        className="w-full px-4 py-4 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl text-white placeholder-white/50 focus:outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20 transition-all duration-300"
+                        className={`w-full px-4 py-4 bg-white/10 backdrop-blur-xl border rounded-2xl text-white placeholder-white/50 focus:outline-none transition-all duration-300 ${
+                          apiResponse && apiResponse.errors && apiResponse.errors.email
+                            ? 'border-red-400 focus:border-red-400 focus:ring-2 focus:ring-red-400/20'
+                            : 'border-white/20 focus:border-purple-400 focus:ring-2 focus:ring-purple-400/20'
+                        }`}
                       />
                     </div>
                   </div>
@@ -254,12 +411,18 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
                           value={formData.contrato}
                           onChange={(e) => handleInputChange('contrato', e.target.value)}
                           required
-                          className={`w-full px-4 py-4 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl text-white focus:outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20 transition-all duration-300 appearance-none cursor-pointer ${selectedContract ? 'border-orange-400/50 bg-orange-400/10' : ''}`}
+                          className={`w-full px-4 py-4 bg-white/10 backdrop-blur-xl border rounded-2xl text-white focus:outline-none transition-all duration-300 appearance-none cursor-pointer ${
+                            apiResponse && apiResponse.errors && apiResponse.errors.contrato
+                              ? 'border-red-400 focus:border-red-400 focus:ring-2 focus:ring-red-400/20'
+                              : selectedContract 
+                                ? 'border-orange-400/50 bg-orange-400/10 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20'
+                                : 'border-white/20 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20'
+                          }`}
                         >
                           <option value="" className="bg-slate-800 text-white" disabled hidden>Selecciona el tipo de contrato</option>
-                          <option value="20-horas" className="bg-slate-800 text-white">20 Horas - Medio Tiempo</option>
-                          <option value="30-horas" className="bg-slate-800 text-white">30 Horas - Tiempo Completo</option>
-                          <option value="40-horas" className="bg-slate-800 text-white">40 Horas - Premium</option>
+                          <option value="20-horas" className="bg-slate-800 text-white">20 Horas - Jornada Media</option>
+                          <option value="30-horas" className="bg-slate-800 text-white">30 Horas - Jornada Parcial</option>
+                          <option value="40-horas" className="bg-slate-800 text-white">40 Horas - Jornada Completa</option>
                         </select>
                         <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none">
                           <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -279,7 +442,11 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
                           value={formData.localidad}
                           onChange={(e) => handleInputChange('localidad', e.target.value)}
                           required
-                          className="w-full px-4 py-4 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl text-white focus:outline-none focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20 transition-all duration-300 appearance-none cursor-pointer"
+                          className={`w-full px-4 py-4 bg-white/10 backdrop-blur-xl border rounded-2xl text-white focus:outline-none transition-all duration-300 appearance-none cursor-pointer ${
+                            apiResponse && apiResponse.errors && apiResponse.errors.localidad
+                              ? 'border-red-400 focus:border-red-400 focus:ring-2 focus:ring-red-400/20'
+                              : 'border-white/20 focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20'
+                          }`}
                         >
                           <option value="" className="bg-slate-800 text-white" disabled hidden>Selecciona tu localidad</option>
                           <option value="madrid" className="bg-slate-800 text-white">Madrid</option>
@@ -309,7 +476,11 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                         id="curriculum-input"
                       />
-                      <div className="w-full px-4 py-4 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl text-white focus-within:border-cyan-400 focus-within:ring-2 focus-within:ring-cyan-400/20 transition-all duration-300 cursor-pointer hover:bg-white/15">
+                      <div className={`w-full px-4 py-4 bg-white/10 backdrop-blur-xl border rounded-2xl text-white transition-all duration-300 cursor-pointer hover:bg-white/15 ${
+                        apiResponse && apiResponse.errors && apiResponse.errors.cv
+                          ? 'border-red-400 focus-within:border-red-400 focus-within:ring-2 focus-within:ring-red-400/20'
+                          : 'border-white/20 focus-within:border-cyan-400 focus-within:ring-2 focus-within:ring-cyan-400/20'
+                      }`}>
                         <label htmlFor="curriculum-input" className="flex items-center gap-3 cursor-pointer">
                           <span className={formData.curriculum ? 'text-white' : 'text-white/50'}>
                             {formData.curriculum || 'Selecciona tu currículum (PDF)'}
@@ -336,23 +507,34 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
                     </div>
                   </div>
 
-                  {/* Submit Button - CORREGIDO: El efecto solo se activa al pasar el ratón sobre el botón */}
+                  {/* Submit Button */}
                   <div className="pt-4">
                     <button
-                      type="submit"
+                      type="button"
+                      disabled={isSubmitting}
+                      onClick={handleSubmit}
                       className="w-full"
                     >
                       <div className="group relative w-full">
-                        <div className="absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl opacity-30 group-hover:opacity-60 blur-md transition-all duration-300" />
-                        <div className="relative w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-4 px-8 rounded-2xl font-bold text-lg transition-all duration-300 group-hover:from-emerald-500 group-hover:to-teal-500 flex items-center justify-center gap-3">
-                          <Send className="h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
-                          Enviar Solicitud
+                        <div className={`absolute -inset-0.5 bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl opacity-30 group-hover:opacity-60 blur-md transition-all duration-300 ${isSubmitting ? 'animate-pulse' : ''}`} />
+                        <div className={`relative w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-4 px-8 rounded-2xl font-bold text-lg transition-all duration-300 group-hover:from-emerald-500 group-hover:to-teal-500 flex items-center justify-center gap-3 ${isSubmitting ? 'opacity-80' : ''}`}>
+                          {isSubmitting ? (
+                            <>
+                              <Loader className="h-5 w-5 animate-spin" />
+                              Enviando...
+                            </>
+                          ) : (
+                            <>
+                              <Send className="h-5 w-5 group-hover:translate-x-1 transition-transform duration-300" />
+                              Enviar Solicitud
+                            </>
+                          )}
                         </div>
                       </div>
                     </button>
                   </div>
 
-                </form>
+                </div>
               </div>
 
               {/* Subtle Inner Glow */}
