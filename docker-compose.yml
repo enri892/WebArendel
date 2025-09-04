@@ -1,0 +1,35 @@
+services:
+  # Backend con configuración mínima
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: spring-backend
+    ports:
+      - "8080:8080"
+    environment:
+      # Agrega esta variable que falta
+      - app.upload.cv-directory=/tmp/uploads
+      # Otras variables básicas
+      - SPRING_PROFILES_ACTIVE=prod
+    networks:
+      - app-network
+    restart: "no"  # Evita el reinicio automático para debug
+
+  # Frontend simplificado
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: react-frontend
+    ports:
+      - "3000:80"  # Cambié a puerto 3000 para evitar conflictos
+    depends_on:
+      - backend
+    networks:
+      - app-network
+    restart: "no"  # Evita el reinicio automático para debug
+
+networks:
+  app-network:
+    driver: bridge
