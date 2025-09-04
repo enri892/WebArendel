@@ -1,29 +1,15 @@
-import React, { useState } from 'react'
-import './App.css'
-import Header from './components/layout/Header'
-import Footer from './components/layout/Footer'
-import HeroSection from './components/sections/HeroSection'
-import BeneficiosSection from './components/sections/BeneficiosSection'
-import ContratosSection from './components/sections/ContratosSection'
-import ProcesoSection from './components/sections/ProcesoSection'
-import TestimoniosSection from './components/sections/TestimoniosSection'
-import FormularioSection from './components/sections/FormularioSection'
+import React from 'react'
+import { Routes, Route, Navigate } from 'react-router-dom'
+import InicioPage from './pages/InicioPage.jsx'
 
 function App() {
-  
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <HeroSection />
-      <BeneficiosSection />
-      <ContratosSection />
-      <ProcesoSection />
-      <TestimoniosSection />
-      <FormularioSection />
-      <Footer />
-    </div>
+    <Routes>
+      <Route path="/inicio" element={<InicioPage />} />
+      <Route path="/" element={<Navigate to="/inicio" replace />} />
+      <Route path="*" element={<div>Página no encontrada</div>} />
+    </Routes>
   )
-  
 }
 
 export default App
