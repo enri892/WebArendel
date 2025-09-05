@@ -2,10 +2,15 @@ package es.arendel.web_arendel.models;
 
 import es.arendel.web_arendel.validator.ValidJobPDF;
 import jakarta.validation.constraints.*;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.web.multipart.MultipartFile;
 
+@Setter
+@Getter
 public class JobApplicationDTO {
 
+    // Getters y Setters
     //Nombre (OBLIGATORIO)
     @NotBlank(message = "El nombre es obligatorio")
     @Size(min = 2, max = 100, message = "El nombre debe tener entre 2 y 100 caracteres")
@@ -44,25 +49,4 @@ public class JobApplicationDTO {
     // Constructores
     public JobApplicationDTO() {}
 
-    // Getters y Setters
-    public String getNombre() { return nombre; }
-    public void setNombre(String nombre) { this.nombre = nombre; }
-
-    public String getTelefono() { return telefono; }
-    public void setTelefono(String telefono) { this.telefono = telefono; }
-
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-
-    public String getContrato() { return contrato; }
-    public void setContrato(String contrato) { this.contrato = contrato; }
-
-    public String getLocalidad() { return localidad; }
-    public void setLocalidad(String localidad) { this.localidad = localidad; }
-
-    public String getComentarios() { return comentarios; }
-    public void setComentarios(String comentarios) { this.comentarios = comentarios; }
-
-    public MultipartFile getCv() { return cv; }
-    public void setCv(MultipartFile cv) { this.cv = cv; }
 }
