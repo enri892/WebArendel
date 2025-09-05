@@ -530,7 +530,11 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
                               : 'border-white/20 focus:border-pink-400 focus:ring-2 focus:ring-pink-400/20'
                             }`}
                         >
+<<<<<<< HEAD
                           <option value="" className="bg-slate-800 text-white">Selecciona tu localidad</option>
+=======
+                          <option value="" className="bg-slate-800 text-white" disabled hidden>Selecciona tu localidad</option>
+>>>>>>> 6cb8bb4819b8ccc9bafcbd5aa4b3c442caa1d8d7
                           <option value="Madrid" className="bg-slate-800 text-white">Madrid</option>
                           <option value="Barcelona" className="bg-slate-800 text-white">Barcelona</option>
                         </select>
