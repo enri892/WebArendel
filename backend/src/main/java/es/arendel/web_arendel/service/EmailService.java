@@ -10,11 +10,13 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class EmailService {
@@ -30,6 +32,14 @@ public class EmailService {
     @Value("${app.upload.cv-directory}")
     private String uploadDirectory;
 
+    // ASÍNCRONO - No bloquea al usuario
+    @Async
+    public CompletableFuture<Boolean> sendJobApplicationEmailAsync(JobApplicationDTO application, String savedFileName) {
+        boolean result = sendJobApplicationEmail(application, savedFileName);
+        return CompletableFuture.completedFuture(result);
+    }
+
+    // SÍNCRONO - Solo para uso interno
     public boolean sendJobApplicationEmail(JobApplicationDTO application, String savedFileName) {
         boolean emailSent = false;
         try {
@@ -134,6 +144,12 @@ public class EmailService {
             case "40-horas" -> "40 horas semanales (Tiempo completo)";
             default -> contrato;
         };
+    }
+
+    @Async
+    public CompletableFuture<Boolean> sendConfirmationEmailAsync(JobApplicationDTO application) {
+        boolean result = sendConfirmationEmail(application);
+        return CompletableFuture.completedFuture(result);
     }
 
     // Enviar email de confirmación al candidato

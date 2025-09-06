@@ -16,12 +16,12 @@ public class PDFFileValidator implements ConstraintValidator<ValidJobPDF, Multip
     @Override
     public boolean isValid(MultipartFile file, ConstraintValidatorContext context) {
 
-//        if (file == null || file.isEmpty()) {
-//            context.disableDefaultConstraintViolation();
-//            context.buildConstraintViolationWithTemplate("El CV es obligatorio")
-//                    .addConstraintViolation();
-//            return false;
-//        }
+        if (file == null || file.isEmpty()) {
+            context.disableDefaultConstraintViolation();
+            context.buildConstraintViolationWithTemplate("El CV es obligatorio")
+                    .addConstraintViolation();
+            return false;
+        }
 
         // Validar tipo de archivo
         String contentType = file.getContentType();

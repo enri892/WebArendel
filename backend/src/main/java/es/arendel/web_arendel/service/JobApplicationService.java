@@ -16,10 +16,8 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.concurrent.CompletableFuture;
 
-/*
-* Esto es para el manejo del correo
-* */
 @Service
 public class JobApplicationService {
 
@@ -33,7 +31,6 @@ public class JobApplicationService {
 
     public boolean processJobApplication(JobApplicationDTO application) {
         String savedFileName = null;
-        boolean emailSent = false;
 
         try {
             // 1. Validar y guardar el archivo CV (si existe)
@@ -41,29 +38,41 @@ public class JobApplicationService {
                 savedFileName = saveFile(application.getCv(), application.getEmail());
             }
 
-            // 2. Enviar email a la empresa
-            emailSent = emailService.sendJobApplicationEmail(application, savedFileName);
-            if (!emailSent) {
-                logger.warn("No se pudo enviar el email principal para: {}", application.getEmail());
-            }
+            // 2. Enviar emails de forma ASÍNCRONA
+            CompletableFuture<Boolean> mainEmailFuture = emailService.sendJobApplicationEmailAsync(application, savedFileName);
+            CompletableFuture<Boolean> confirmationEmailFuture = emailService.sendConfirmationEmailAsync(application);
 
-            // 3. Enviar email de confirmación al candidato
-            boolean confirmationSent = emailService.sendConfirmationEmail(application);
-            if (!confirmationSent) {
-                logger.warn("No se pudo enviar email de confirmación a: {}", application.getEmail());
-            }
+            // 3. El usuario recibe respuesta inmediata (no esperamos a que terminen los emails)
+            logger.info("Solicitud procesada exitosamente para: {} - Emails enviándose en segundo plano", application.getEmail());
 
-            logger.info("Solicitud procesada exitosamente para: {}", application.getEmail());
-            return emailSent;
+            // Opcional: Si quieres logs de resultado (pero no bloqueas al usuario)
+            mainEmailFuture.thenAccept(result -> {
+                if (result) {
+                    logger.info("Email principal enviado exitosamente para: {}", application.getEmail());
+                } else {
+                    logger.warn("Error al enviar email principal para: {}", application.getEmail());
+                }
+            });
+
+            confirmationEmailFuture.thenAccept(result -> {
+                if (result) {
+                    logger.info("Email de confirmación enviado exitosamente para: {}", application.getEmail());
+                } else {
+                    logger.warn("Error al enviar email de confirmación para: {}", application.getEmail());
+                }
+            });
+
+            return true; // Siempre devolvemos true porque el procesamiento básico fue exitoso
 
         } catch (Exception e) {
             logger.error("Error al procesar solicitud de empleo para: {}", application.getEmail(), e);
-            return false;
-        } finally {
-            // Eliminar archivo si no se envió el correo principal (fallback)
-            if (savedFileName != null && !emailSent) {
+
+            // Si hay error, eliminar archivo si se guardó
+            if (savedFileName != null) {
                 deleteFile(savedFileName);
             }
+
+            return false;
         }
     }
 
@@ -95,7 +104,6 @@ public class JobApplicationService {
         }
 
         // Generar nombre único para el archivo
-
         String timestamp = LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd-MM-yyyy_HH'h'mm'm'ss's'"));
         String fileName = String.format("CV_%s_%s",
                 timestamp,
@@ -108,12 +116,4 @@ public class JobApplicationService {
         logger.info("Archivo guardado en: {}", filePath.toAbsolutePath());
         return fileName;
     }
-
-//    private boolean validateBusinessRules(JobApplicationDTO application) {
-//        // Validaciones adicionales de negocio
-//        // Por ejemplo: verificar límite de solicitudes por email, validar disponibilidad del tipo de contrato, etc.
-//
-//
-//        return true;
-//    }
 }
