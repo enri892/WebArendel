@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Menu, X, ArrowRight, Home, Gift, FileText, Mail, Map } from 'lucide-react';
-import logo from '../../assets/logo.jpg';
+import logo from '../../assets/logo.png';
+import './Header.css'; 
 
 const Header = () => {
   const [isScrolled, setIsScrolled] = useState(false);
@@ -20,7 +21,7 @@ const Header = () => {
   useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
-      
+
       // Cerrar menú móvil si se redimensiona a un tamaño mayor
       if (window.innerWidth > 950) {
         setIsMobileMenuOpen(false);
@@ -100,15 +101,13 @@ const Header = () => {
                       key={item.id}
                       onClick={() => handleNavClick(item.id)}
                       className={`group relative px-4 py-2 rounded-full transition-all duration-300 border-none bg-transparent cursor-pointer
-                        hover:bg-white/80 hover:shadow-lg hover:-translate-y-0.5 ${
-                          activeSection === item.id ? 'bg-white shadow-md' : 'text-gray-700'
+                        hover:bg-white/80 hover:shadow-lg hover:-translate-y-0.5 ${activeSection === item.id ? 'bg-white shadow-md' : 'text-gray-700'
                         }`}
                       style={{ color: activeSection === item.id ? '#003ea5' : undefined }}
                     >
                       <div className="flex items-center space-x-2">
-                        <Icon className={`w-4 h-4 transition-all duration-300 group-hover:rotate-12 ${
-                          activeSection === item.id ? 'text-purple-600' : 'group-hover:text-purple-600'
-                        }`} />
+                        <Icon className={`w-4 h-4 transition-all duration-300 group-hover:rotate-12 ${activeSection === item.id ? 'text-purple-600' : 'group-hover:text-purple-600'
+                          }`} />
                         <span className="font-medium">{item.label}</span>
                       </div>
                       {activeSection === item.id && (
@@ -156,18 +155,16 @@ const Header = () => {
       {/* Mobile Menu - Se muestra en tabletas pequeñas y móviles */}
       {isMobileView && (
         <div
-          className={`fixed inset-0 z-40 transition-all duration-500 ${
-            isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-          }`}
+          className={`fixed inset-0 z-40 transition-all duration-500 ${isMobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+            }`}
         >
-          <div 
+          <div
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setIsMobileMenuOpen(false)}
           ></div>
           <div
-            className={`absolute top-0 right-0 w-80 h-full bg-white shadow-2xl transform transition-transform duration-500 ${
-              isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
-            }`}
+            className={`absolute top-0 right-0 w-80 h-full bg-white shadow-2xl transform transition-transform duration-500 ${isMobileMenuOpen ? 'translate-x-0' : 'translate-x-full'
+              }`}
           >
             <div className="p-6 bg-gradient-to-r from-purple-600 to-pink-600">
               <div className="flex items-center justify-between">
@@ -189,8 +186,7 @@ const Header = () => {
                     key={item.id}
                     onClick={() => handleNavClick(item.id)}
                     className={`group flex items-center space-x-3 p-4 rounded-xl transition-all duration-300 border-none bg-transparent cursor-pointer w-full text-left
-                      hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 hover:shadow-lg hover:transform hover:translate-x-2 ${
-                        activeSection === item.id ? 'bg-gradient-to-r from-purple-100 to-pink-100 shadow-md' : ''
+                      hover:bg-gradient-to-r hover:from-purple-50 hover:to-pink-50 hover:shadow-lg hover:transform hover:translate-x-2 ${activeSection === item.id ? 'bg-gradient-to-r from-purple-100 to-pink-100 shadow-md' : ''
                       }`}
                     style={{
                       animationDelay: `${index * 100}ms`,
@@ -198,14 +194,12 @@ const Header = () => {
                     }}
                   >
                     <Icon
-                      className={`w-5 h-5 transition-all duration-300 group-hover:scale-110 ${
-                        activeSection === item.id ? 'text-purple-600' : 'text-gray-600 group-hover:text-purple-600'
-                      }`}
+                      className={`w-5 h-5 transition-all duration-300 group-hover:scale-110 ${activeSection === item.id ? 'text-purple-600' : 'text-gray-600 group-hover:text-purple-600'
+                        }`}
                     />
                     <span
-                      className={`font-medium transition-colors duration-300 ${
-                        activeSection === item.id ? 'text-purple-600' : 'text-gray-700 group-hover:text-purple-600'
-                      }`}
+                      className={`font-medium transition-colors duration-300 ${activeSection === item.id ? 'text-purple-600' : 'text-gray-700 group-hover:text-purple-600'
+                        }`}
                     >
                       {item.label}
                     </span>
@@ -238,32 +232,6 @@ const Header = () => {
           </div>
         </div>
       )}
-
-      <style jsx>{`
-        @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateX(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-        
-        /* Estilos para mejorar la responsividad en diferentes dispositivos */
-        @media (max-width: 950px) {
-          .desktop-only {
-            display: none !important;
-          }
-        }
-        
-        @media (min-width: 951px) {
-          .mobile-only {
-            display: none !important;
-          }
-        }
-      `}</style>
     </>
   );
 };
