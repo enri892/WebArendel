@@ -1,35 +1,99 @@
+# docker-compose.yml
+
+version: '3.8'
+
 services:
-  # Backend con configuración mínima
+  # Base de datos MySQL (opcional para futuro)
+  # database:
+  #   image: mysql:8.0
+  #   container_name: arendel-db
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
+  #     MYSQL_DATABASE: ${DB_NAME:-arendel}
+  #     MYSQL_USER: ${DB_USER:-arendel_user}
+  #     MYSQL_PASSWORD: ${DB_PASSWORD:-arendel_pass}
+  #   ports:
+  #     - "3306:3306"
+  #   volumes:
+  #     - mysql_data:/var/lib/mysql
+  #   networks:
+  #     - arendel-network
+  #   restart: unless-stopped
+
+  # Backend Spring Boot
   backend:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    container_name: spring-backend
+    container_name: arendel-backend
+    environment:
+      # Variables de entorno para Spring Boot
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-production}
+      
+      # Email configuration
+      EMAIL_USERNAME: ${EMAIL_USERNAME:-vladutorza64@gmail.com}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD:-rhsl jwzs ulfb knjy}
+      RECIPIENT_EMAIL: ${RECIPIENT_EMAIL:-vladorza64@gmail.com}
+      
+      # Server configuration  
+      SERVER_PORT: 8080
+      
+      # JVM Options
+      JAVA_OPTS: ${JAVA_OPTS:--Xmx512m -Xms256m}
+      
     ports:
       - "8080:8080"
-    environment:
-      # Agrega esta variable que falta
-      - app.upload.cv-directory=/tmp/uploads
-      # Otras variables básicas
-      - SPRING_PROFILES_ACTIVE=prod
+    volumes:
+      # Volumen para uploads (CVs)
+      - cv_uploads:/app/uploads/cv
+      # Volumen para logs
+      - app_logs:/app/logs
     networks:
-      - app-network
-    restart: "no"  # Evita el reinicio automático para debug
+      - arendel-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    # depends_on:
+    #   - database
 
-  # Frontend simplificado
+  # Frontend Nginx + React
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: react-frontend
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+        VITE_APP_ENV: ${VITE_APP_ENV:-production}
+    container_name: arendel-frontend
+    environment:
+      # URL del backend (para nginx proxy)
+      API_URL: http://backend:8080
     ports:
-      - "3000:80"  # Cambié a puerto 3000 para evitar conflictos
+      - "80:80"
+    networks:
+      - arendel-network
     depends_on:
       - backend
-    networks:
-      - app-network
-    restart: "no"  # Evita el reinicio automático para debug
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health", "||", "exit", "1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 networks:
-  app-network:
+  arendel-network:
     driver: bridge
+    name: arendel-network
+
+volumes:
+  # mysql_data:
+  #   name: arendel-mysql-data
+  cv_uploads:
+    name: arendel-cv-uploads
+  app_logs:
+    name: arendel-app-logs
