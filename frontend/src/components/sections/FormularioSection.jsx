@@ -502,7 +502,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
                                 : 'border-white/20 focus:border-orange-400 focus:ring-2 focus:ring-orange-400/20'
                             }`}
                         >
-                          <option value="" className="bg-slate-800 text-white">Selecciona el tipo de contrato</option>
+                          <option value="" className="bg-slate-800 text-white" disabled hidden>Selecciona el tipo de contrato</option>
                           <option value="20-horas" className="bg-slate-800 text-white">20 Horas - Jornada Media</option>
                           <option value="30-horas" className="bg-slate-800 text-white">30 Horas - Jornada Parcial</option>
                           <option value="40-horas" className="bg-slate-800 text-white">40 Horas - Jornada Completa</option>
