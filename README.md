@@ -3,7 +3,7 @@
 ## Estructura del docker-compose y nginx
 
 ```
-tu-proyecto/
+
 ├── backend/
 │   ├── Dockerfile
 │   └── .dockerignore
