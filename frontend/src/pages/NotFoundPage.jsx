@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { Home, MapPin, Globe } from 'lucide-react'
-import logo from '../assets/logo.png'
+import logo from '../assets/logoWhite.png'
 
 const NotFoundPage = () => {
     const [isVisible, setIsVisible] = useState(false)
@@ -133,33 +133,6 @@ const NotFoundPage = () => {
                                     4
                                 </span>
                             </h1>
-                            
-                            {/* Floating Icons - Solo en desktop para evitar superposiciones */}
-                            <div className="hidden lg:block">
-                                <div 
-                                    className="absolute top-8 left-1/3 transform -translate-x-1/2 animate-bounce"
-                                    style={{ 
-                                        animationDuration: '3s',
-                                        animationDelay: '0s'
-                                    }}
-                                >
-                                    <div className="w-14 h-14 bg-gradient-to-br from-purple-500/40 to-blue-500/40 rounded-2xl flex items-center justify-center backdrop-blur-md border border-white/20 shadow-xl">
-                                        <MapPin className="w-7 h-7 text-blue-200" />
-                                    </div>
-                                </div>
-
-                                <div 
-                                    className="absolute top-4 right-1/4 transform translate-x-1/2 animate-bounce"
-                                    style={{ 
-                                        animationDuration: '4s',
-                                        animationDelay: '1s'
-                                    }}
-                                >
-                                    <div className="w-10 h-10 bg-gradient-to-br from-blue-500/40 to-indigo-500/40 rounded-lg flex items-center justify-center backdrop-blur-md border border-white/20 shadow-xl">
-                                        <Globe className="w-5 h-5 text-blue-200" />
-                                    </div>
-                                </div>
-                            </div>
                         </div>
 
                         {/* Iconos decorativos para móvil - debajo del 404 */}
@@ -184,25 +157,6 @@ const NotFoundPage = () => {
                                 La página que buscas decidió tomarse unas vacaciones inesperadas. 
                                 Pero no te preocupes, ¡podemos ayudarte a encontrar tu camino de vuelta!
                             </p>
-
-                            {/* Suggestion Box - Mejorado para móvil */}
-                            <div className="relative max-w-2xl mx-auto mb-8 sm:mb-10">
-                                <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-2xl sm:rounded-3xl blur-xl"></div>
-                                <div className="relative bg-gradient-to-br from-white/10 to-white/5 backdrop-blur-xl border border-white/20 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-2xl mx-2">
-                                    <div className="flex flex-col sm:flex-row items-start gap-3 sm:gap-4 text-center sm:text-left">
-                                        <div className="flex-shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-blue-500 to-cyan-500 rounded-xl sm:rounded-2xl flex items-center justify-center shadow-lg mx-auto sm:mx-0">
-                                            <span className="text-xl sm:text-2xl">💡</span>
-                                        </div>
-                                        <div className="w-full">
-                                            <h3 className="text-white font-bold text-base sm:text-lg mb-2">¿Qué puedes hacer?</h3>
-                                            <p className="text-blue-100/90 text-sm sm:text-base leading-relaxed">
-                                                Verifica que la URL esté correcta o regresa al inicio para explorar 
-                                                todas las funcionalidades disponibles.
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
 
                         {/* Home Button - Responsive */}

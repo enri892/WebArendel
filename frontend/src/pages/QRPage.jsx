@@ -11,7 +11,7 @@ const QRPage = () => {
 
     useEffect(() => {
         // 🎯 ¡¡¡CAMBIA SOLO ESTA LÍNEA PARA ACTUALIZAR EL DESTINO!!!
-        const REDIRECT_URL = 'http://192.168.1.129:5173/'
+        const REDIRECT_URL = 'http://localhost/'
         
         setIsVisible(true)
         

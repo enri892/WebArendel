@@ -14,7 +14,12 @@ RUN npm install -g pnpm
 RUN pnpm install --frozen-lockfile
 
 # Copiar código fuente
-COPY . .
+COPY src ./src
+COPY public ./public
+COPY index.html ./
+COPY vite.config.js ./
+COPY tsconfig*.json ./
+COPY *.config.js ./
 
 # Variables de entorno para build
 ARG VITE_API_URL=http://localhost:8080

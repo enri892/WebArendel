@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Star, Truck, Users, MapPin, Award, ArrowRight, Play, Sparkles } from 'lucide-react';
-import repartidor from '../../assets/repartidor.jpg';
+import repartidor from '../../assets/repartidor1.jpg';
 
 const HeroSection = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });

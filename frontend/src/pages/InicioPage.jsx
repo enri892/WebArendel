@@ -7,6 +7,7 @@ import BeneficiosSection from '../components/sections/BeneficiosSection'
 import ContratosSection from '../components/sections/ContratosSection'
 import ProcesoSection from '../components/sections/ProcesoSection'
 import FormularioSection from '../components/sections/FormularioSection'
+import ZonasSection from '../components/sections/ZonasSection'
 
 function InicioPage() {
   // Estado para manejar el contrato seleccionado
@@ -27,6 +28,7 @@ function InicioPage() {
       <Header />
       <HeroSection />
       <BeneficiosSection />
+      <ZonasSection />
       <ContratosSection onSelectContract={handleSelectContract} />
       <ProcesoSection />
       <FormularioSection 

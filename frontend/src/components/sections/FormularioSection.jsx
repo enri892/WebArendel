@@ -532,7 +532,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
                         >
                           <option value="" className="bg-slate-800 text-white" disabled hidden>Selecciona tu localidad</option>
                           <option value="Madrid" className="bg-slate-800 text-white">Madrid</option>
-                          <option value="Barcelona" className="bg-slate-800 text-white">Barcelona</option>
+                          <option value="GranCanaria" className="bg-slate-800 text-white">Gran Canaria</option>
                         </select>
                         <div className="absolute inset-y-0 right-0 flex items-center px-4 pointer-events-none">
                           <svg className="w-4 h-4 text-white/50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
