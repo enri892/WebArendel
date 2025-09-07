@@ -43,16 +43,16 @@ const HeroSection = () => {
   }, []);
 
   const stats = [
-    { icon: Users, number: "500+", label: "Repartidores Activos", color: "from-blue-400 to-blue-600" },
-    { icon: MapPin, number: "15", label: "Localidades", color: "from-emerald-400 to-emerald-600" },
-    { icon: Award, number: "3", label: "Años de Experiencia", color: "from-purple-400 to-purple-600" }
+    { icon: Users, number: "1000+", label: "Repartidores Activos", color: "from-blue-400 to-blue-600" },
+    { icon: MapPin, number: "15", label: "Ciudades", color: "from-emerald-400 to-emerald-600" },
+    { icon: Award, number: "10", label: "Años de Experiencia", color: "from-purple-400 to-purple-600" }
   ];
 
   return (
     <section 
       ref={sectionRef}
       id="inicio" 
-      className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950"
+      className="relative min-h-screen overflow-hidden bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950 pt-8"
     >
       {/* Animated Background */}
       <div className={`absolute inset-0 transition-opacity duration-1000 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
@@ -117,8 +117,8 @@ const HeroSection = () => {
               </button>
             </div>
 
-            {/* Stats with individual delays */}
-            <div className="grid grid-cols-3 gap-4 lg:gap-8">
+            {/* Stats with individual delays - Mejorados para móviles pequeños */}
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 lg:gap-8 px-1">
               {stats.map((stat, index) => (
                 <div 
                   key={index}
@@ -127,15 +127,17 @@ const HeroSection = () => {
                 >
                   <div className="relative group">
                     <div className={`absolute inset-0 bg-gradient-to-r ${stat.color} rounded-2xl opacity-20 group-hover:opacity-40 transition-opacity duration-300 blur-xl`} />
-                    <div className="relative bg-white/10 backdrop-blur-md rounded-2xl p-3 lg:p-6 border border-white/20 hover:border-white/40 transition-all duration-300 transform hover:scale-105">
-                      <div className="flex items-center justify-center mb-2 lg:mb-3">
-                        <div className={`p-2 lg:p-3 bg-gradient-to-r ${stat.color} rounded-full`}>
-                          <stat.icon className="h-4 w-4 lg:h-6 lg:w-6 text-white" />
+                    <div className="relative bg-white/10 backdrop-blur-md rounded-xl sm:rounded-2xl p-2 sm:p-3 lg:p-6 border border-white/20 hover:border-white/40 transition-all duration-300 transform hover:scale-105">
+                      <div className="flex items-center justify-center mb-1 sm:mb-2 lg:mb-3">
+                        <div className={`p-1.5 sm:p-2 lg:p-3 bg-gradient-to-r ${stat.color} rounded-full`}>
+                          <stat.icon className="h-3 w-3 sm:h-4 sm:w-4 lg:h-6 lg:w-6 text-white" />
                         </div>
                       </div>
                       <div className="text-center">
-                        <div className="text-2xl lg:text-3xl xl:text-4xl font-black text-white mb-1 lg:mb-2">{stat.number}</div>
-                        <div className="text-xs lg:text-sm text-blue-100/70 font-medium leading-tight">{stat.label}</div>
+                        <div className="text-lg sm:text-2xl lg:text-3xl xl:text-4xl font-black text-white mb-0.5 sm:mb-1 lg:mb-2">{stat.number}</div>
+                        <div className="text-xs sm:text-xs lg:text-sm text-blue-100/70 font-medium leading-tight px-0.5">
+                          {stat.label}
+                        </div>
                       </div>
                     </div>
                   </div>
