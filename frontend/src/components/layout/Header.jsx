@@ -12,8 +12,8 @@ const Header = () => {
   const navItems = [
     { id: 'inicio', label: 'Inicio', icon: Home },
     { id: 'beneficios', label: 'Beneficios', icon: Gift },
-    { id: 'contratos', label: 'Contratos', icon: FileText },
     { id: 'zonas', label: 'Zonas', icon: Map },
+    { id: 'contratos', label: 'Contratos', icon: FileText },
     { id: 'contacto', label: 'Contáctanos', icon: Mail }
   ];
 

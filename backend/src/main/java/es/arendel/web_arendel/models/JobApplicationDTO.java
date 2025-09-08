@@ -35,7 +35,7 @@ public class JobApplicationDTO {
 
     //Localidad (Opcional)
     @NotBlank(message = "La localidad es obligatoria")
-    @Pattern(regexp = "^(Madrid|Barcelona)$", message = "Localidad inválida")
+    @Pattern(regexp = "^(Madrid|GranCanaria)$", message = "Localidad inválida")
     private String localidad;
 
     //Comentarios adicionales (Opcional)
