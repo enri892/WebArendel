@@ -39,7 +39,7 @@ const ContratosSection = ({ onSelectContract }) => {
             title: "Contrato 20 Horas",
             description: "Ideal para estudiantes o trabajo complementario",
             badgeText: "Jornada Media",
-            price: "+ 700€",
+            price: "+ 1.000€",
             benefits: [
                 "20 horas semanales",
                 "Horarios flexibles",
@@ -55,7 +55,7 @@ const ContratosSection = ({ onSelectContract }) => {
             title: "Contrato 30 Horas",
             description: "Perfecto para equilibrar vida personal y laboral",
             badgeText: "Jornada Parcial",
-            price: "+ 1.000€",
+            price: "+ 1.300€",
             benefits: [
                 "30 horas semanales",
                 "Horarios flexibles",
@@ -73,7 +73,7 @@ const ContratosSection = ({ onSelectContract }) => {
             description: "Máximos ingresos y estabilidad completa",
             badgeText: "Jornada Completa",
             badgeIcon: Crown,
-            price: "+ 1.300€",
+            price: "+ 1.800€",
             benefits: [
                 "40 horas semanales",
                 "Horarios flexibles",
