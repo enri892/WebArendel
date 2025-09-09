@@ -34,7 +34,7 @@ RUN pnpm run build
 FROM nginx:alpine
 
 # Instalar gettext para envsubst
-RUN apk add --no-cache gettext
+RUN apk add --no-cache gettext curl
 
 # Remover configuración por defecto de nginx
 RUN rm /etc/nginx/conf.d/default.conf

@@ -1,23 +1,5 @@
-# docker-compose.yml
-
+# docker-compose.yml para producción
 services:
-  # Base de datos MySQL (opcional para futuro)
-  # database:
-  #   image: mysql:8.0
-  #   container_name: arendel-db
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-rootpassword}
-  #     MYSQL_DATABASE: ${DB_NAME:-arendel}
-  #     MYSQL_USER: ${DB_USER:-arendel_user}
-  #     MYSQL_PASSWORD: ${DB_PASSWORD:-arendel_pass}
-  #   ports:
-  #     - "3306:3306"
-  #   volumes:
-  #     - mysql_data:/var/lib/mysql
-  #   networks:
-  #     - arendel-network
-  #   restart: unless-stopped
-
   # Backend Spring Boot
   backend:
     build:
@@ -25,38 +7,27 @@ services:
       dockerfile: Dockerfile
     container_name: arendel-backend
     environment:
-      # Variables de entorno para Spring Boot
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-production}
-      
-      # Email configuration
-      EMAIL_USERNAME: ${EMAIL_USERNAME:-vladutorza64@gmail.com}
-      EMAIL_PASSWORD: ${EMAIL_PASSWORD:-rhsl jwzs ulfb knjy}
-      RECIPIENT_EMAIL: ${RECIPIENT_EMAIL:-vladorza64@gmail.com}
-      
-      # Server configuration  
+      EMAIL_USERNAME: ${EMAIL_USERNAME}
+      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+      RECIPIENT_EMAIL: ${RECIPIENT_EMAIL}
       SERVER_PORT: 8080
-      
-      # JVM Options
-      JAVA_OPTS: ${JAVA_OPTS:--Xmx512m -Xms256m}
-      
+      JAVA_OPTS: ${JAVA_OPTS:--Xmx1g -Xms512m}
     ports:
-      - "8080:8080"
+      - "127.0.0.1:8080:8080"
     volumes:
-      # Volumen para uploads (CVs)
       - cv_uploads:/app/uploads/cv
-      # Volumen para logs
       - app_logs:/app/logs
     networks:
       - arendel-network
     restart: unless-stopped
     healthcheck:
+      # Health check elegante usando curl al endpoint que creaste
       test: ["CMD", "curl", "-f", "http://localhost:8080/api/health", "||", "exit", "1"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
-    # depends_on:
-    #   - database
 
   # Frontend Nginx + React
   frontend:
@@ -64,21 +35,21 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
+        VITE_API_URL: ${VITE_API_URL}
         VITE_APP_ENV: ${VITE_APP_ENV:-production}
     container_name: arendel-frontend
     environment:
-      # URL del backend (para nginx proxy)
       API_URL: http://backend:8080
     ports:
-      - "80:80"
+      - "127.0.0.1:3000:80"
     networks:
       - arendel-network
     depends_on:
       - backend
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health", "||", "exit", "1"]
+      # Health check del frontend al endpoint root
+      test: ["CMD", "curl", "-f", "http://localhost/", "||", "exit", "1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -89,8 +60,6 @@ networks:
     name: arendel-network
 
 volumes:
-  # mysql_data:
-  #   name: arendel-mysql-data
   cv_uploads:
     name: arendel-cv-uploads
   app_logs:
