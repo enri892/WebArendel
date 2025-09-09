@@ -21,6 +21,48 @@ check_docker() {
     fi
 }
 
+# Función para corregir terminaciones de línea
+fix_line_endings() {
+    echo "🔧 Verificando y corrigiendo terminaciones de línea..."
+    
+    # Corregir docker-entrypoint.sh si existe
+    if [ -f "docker-entrypoint.sh" ]; then
+        echo "   📝 Corrigiendo docker-entrypoint.sh..."
+        sed -i 's/\r$//' docker-entrypoint.sh
+        echo "   ✅ docker-entrypoint.sh corregido"
+    fi
+    
+    # Corregir otros archivos críticos si existen
+    for file in "nginx.conf.template" "Dockerfile" ".dockerignore"; do
+        if [ -f "$file" ]; then
+            echo "   📝 Corrigiendo $file..."
+            sed -i 's/\r$//' "$file"
+            echo "   ✅ $file corregido"
+        fi
+    done
+    
+    # Corregir archivos en directorios específicos
+    if [ -d "frontend" ]; then
+        find frontend -name "*.sh" -o -name "Dockerfile*" -o -name "*.conf*" | while read -r file; do
+            if [ -f "$file" ]; then
+                echo "   📝 Corrigiendo $file..."
+                sed -i 's/\r$//' "$file"
+            fi
+        done
+    fi
+    
+    if [ -d "backend" ]; then
+        find backend -name "*.sh" -o -name "Dockerfile*" | while read -r file; do
+            if [ -f "$file" ]; then
+                echo "   📝 Corrigiendo $file..."
+                sed -i 's/\r$//' "$file"
+            fi
+        done
+    fi
+    
+    echo "✅ Terminaciones de línea verificadas y corregidas"
+}
+
 # Función para build y deploy
 deploy() {
     echo "🔨 Construyendo imágenes..."
