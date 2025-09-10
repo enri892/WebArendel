@@ -5,7 +5,10 @@ import {
   Mail,
   Clock,
   MapPin,
-  MessageCircle
+  MessageCircle,
+  Calendar,
+  CheckSquare,
+  ToggleLeft
 } from 'lucide-react';
 import HeaderForm from '../ui/HeaderForm.jsx';
 import FormInput from '../ui/FormInput.jsx';
@@ -24,10 +27,35 @@ const contratoOptions = [
   { value: '40-horas', label: '40 Horas - Jornada Completa' }
 ];
 
+const disponibilidadOptions = [
+  { value: 'dia', label: 'Día' },
+  { value: 'tarde', label: 'Tarde' },
+  { value: 'noche-plus', label: 'Noche (Plus)' },
+  { value: 'indiferente', label: 'Indiferente' }
+];
+
 const localidadOptions = [
   { value: 'Madrid', label: 'Madrid' },
   { value: 'GranCanaria', label: 'Gran Canaria' }
 ];
+
+// Zonas por localidad
+const zonasPorLocalidad = {
+  Madrid: [
+    { value: 'getafe-leganes', label: 'Getafe-Leganés' },
+    { value: 'arganda-rivas', label: 'Arganda-Rivas' },
+    { value: 'madrid', label: 'Madrid' },
+    { value: 'villanueva-brunete', label: 'Villanueva-Brunete' },
+    { value: 'toledo', label: 'Toledo' }
+  ],
+  GranCanaria: [
+    { value: 'telde', label: 'Telde' },
+    { value: 'puertorico-mogan', label: 'Puerto Rico-Mogán' },
+    { value: 'maspalomas', label: 'Maspalomas' },
+    { value: 'arucas', label: 'Arucas' },
+    { value: 'vecindario', label: 'Vecindario' }
+  ]
+};
 
 const FormularioSection = ({ selectedContract, onContractChange }) => {
   const API_BASE_URL = import.meta.env.VITE_API_URL;
@@ -37,7 +65,9 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
     telefono: '',
     email: '',
     contrato: '',
+    disponibilidad: '',
     localidad: '',
+    zonas: [],
     comentarios: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,7 +87,8 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
         const parsedData = JSON.parse(savedData);
         setFormData(prev => ({
           ...prev,
-          ...parsedData
+          ...parsedData,
+          zonas: parsedData.zonas || []
         }));
       } catch (error) {
         console.error('Error cargando datos temporales:', error);
@@ -120,6 +151,16 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
     }
   }, [selectedContract, onContractChange]);
 
+  // Limpiar zonas cuando cambia la localidad
+  useEffect(() => {
+    if (formData.localidad) {
+      setFormData(prev => ({
+        ...prev,
+        zonas: []
+      }));
+    }
+  }, [formData.localidad]);
+
   // Limpiar timer al desmontar
   useEffect(() => {
     return () => {
@@ -150,6 +191,25 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
     if (field === 'contrato' && onContractChange) {
       onContractChange(value);
     }
+  };
+
+  const handleZonaChange = (zona) => {
+    setFormData(prev => ({
+      ...prev,
+      zonas: prev.zonas.includes(zona)
+        ? prev.zonas.filter(z => z !== zona)
+        : [...prev.zonas, zona]
+    }));
+  };
+
+  const handleSelectAllZonas = () => {
+    const zonasDisponibles = zonasPorLocalidad[formData.localidad] || [];
+    const allZonasValues = zonasDisponibles.map(z => z.value);
+    
+    setFormData(prev => ({
+      ...prev,
+      zonas: prev.zonas.length === allZonasValues.length ? [] : allZonasValues
+    }));
   };
 
   const handleFileChange = (e) => {
@@ -186,10 +246,10 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const requiredFields = ['nombre', 'telefono', 'email', 'contrato', 'localidad'];
+    const requiredFields = ['nombre', 'telefono', 'email', 'contrato', 'disponibilidad', 'localidad'];
     const emptyFields = requiredFields.filter(field => !formData[field]);
 
-    if (emptyFields.length > 0 || !file) {
+    if (emptyFields.length > 0 || !file || formData.zonas.length === 0) {
       const errors = {};
 
       emptyFields.forEach(field => {
@@ -198,6 +258,10 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
 
       if (!file) {
         errors['cv'] = 'El currículum es obligatorio';
+      }
+
+      if (formData.zonas.length === 0) {
+        errors['zonas'] = 'Debes seleccionar al menos una zona';
       }
 
       setApiResponse({
@@ -227,7 +291,9 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
       formDataToSend.append('telefono', formData.telefono);
       formDataToSend.append('email', formData.email);
       formDataToSend.append('contrato', formData.contrato);
+      formDataToSend.append('disponibilidad', formData.disponibilidad);
       formDataToSend.append('localidad', formData.localidad);
+      formDataToSend.append('zonas', formData.zonas.join(','));
       formDataToSend.append('comentarios', formData.comentarios || '');
 
       if (file) {
@@ -261,7 +327,9 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
           telefono: '',
           email: '',
           contrato: '',
+          disponibilidad: '',
           localidad: '',
+          zonas: [],
           comentarios: ''
         });
         setFile(null);
@@ -287,6 +355,10 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
   const closeMessage = () => {
     setApiResponse(null);
   };
+
+  const zonasDisponibles = zonasPorLocalidad[formData.localidad] || [];
+  const allZonasSelected = zonasDisponibles.length > 0 && 
+    zonasDisponibles.every(z => formData.zonas.includes(z.value));
 
   return (
     <section 
@@ -356,7 +428,7 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
             colSpan={2}
           />
 
-          {/* Contrato y Localidad */}
+          {/* Contrato y Disponibilidad */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormSelect
               icon={Clock}
@@ -373,6 +445,21 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
             />
             
             <FormSelect
+              icon={Calendar}
+              iconColor="text-yellow-400"
+              label="Disponibilidad"
+              field="disponibilidad"
+              value={formData.disponibilidad}
+              onChange={handleInputChange}
+              options={disponibilidadOptions}
+              placeholder="Selecciona tu disponibilidad"
+              error={apiResponse?.errors?.disponibilidad}
+            />
+          </div>
+
+          {/* Localidad y Zonas */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormSelect
               icon={MapPin}
               iconColor="text-pink-400"
               label="Localidad"
@@ -383,6 +470,54 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
               placeholder="Selecciona tu localidad"
               error={apiResponse?.errors?.localidad}
             />
+            
+            {/* Zonas con checkboxes */}
+            <div className="space-y-3">
+              <label className="flex items-center gap-2 text-white font-semibold text-sm uppercase tracking-wider">
+                <CheckSquare className="h-4 w-4 text-cyan-400" />
+                Zonas de trabajo *
+              </label>
+              
+              {!formData.localidad ? (
+                <div className="p-4 bg-white/5 backdrop-blur-xl border border-white/20 rounded-2xl">
+                  <p className="text-white/60 text-sm">Debe seleccionar una localidad primero</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {/* Botón Seleccionar Todo */}
+                  <button
+                    type="button"
+                    onClick={handleSelectAllZonas}
+                    className="w-full px-4 py-2 bg-gradient-to-r from-cyan-600/20 to-blue-600/20 hover:from-cyan-600/30 hover:to-blue-600/30 border border-cyan-400/30 rounded-xl text-cyan-400 font-medium text-sm transition-all duration-300 flex items-center justify-center gap-2"
+                  >
+                    <ToggleLeft className={`h-4 w-4 transition-transform ${allZonasSelected ? 'rotate-180' : ''}`} />
+                    {allZonasSelected ? 'Deseleccionar todo' : 'Seleccionar todo'}
+                  </button>
+                  
+                  {/* Checkboxes de zonas */}
+                  <div className="grid grid-cols-1 gap-2 p-4 bg-white/5 backdrop-blur-xl border border-white/20 rounded-2xl">
+                    {zonasDisponibles.map(zona => (
+                      <label
+                        key={zona.value}
+                        className="flex items-center gap-3 p-2 hover:bg-white/10 rounded-lg cursor-pointer transition-colors"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={formData.zonas.includes(zona.value)}
+                          onChange={() => handleZonaChange(zona.value)}
+                          className="w-5 h-5 text-cyan-600 bg-white/10 border-white/30 rounded focus:ring-cyan-500 focus:ring-2"
+                        />
+                        <span className="text-white text-sm">{zona.label}</span>
+                      </label>
+                    ))}
+                  </div>
+                  
+                  {apiResponse?.errors?.zonas && (
+                    <p className="mt-1 text-sm text-red-400">{apiResponse.errors.zonas}</p>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Curriculum PDF */}
