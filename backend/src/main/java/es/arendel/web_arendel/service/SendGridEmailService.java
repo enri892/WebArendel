@@ -1,94 +1,125 @@
 package es.arendel.web_arendel.service;
 
+import com.sendgrid.*;
+import com.sendgrid.helpers.mail.Mail;
+import com.sendgrid.helpers.mail.objects.Attachments;
+import com.sendgrid.helpers.mail.objects.Content;
+import com.sendgrid.helpers.mail.objects.Email;
 import es.arendel.web_arendel.models.JobApplicationDTO;
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.concurrent.CompletableFuture;
 
 @Service
-public class EmailService {
+public class SendGridEmailService {
 
-    private static final Logger logger = LoggerFactory.getLogger(EmailService.class);
+    private static final Logger logger = LoggerFactory.getLogger(SendGridEmailService.class);
 
-    @Autowired
-    private JavaMailSender mailSender;
+    @Value("${sendgrid.api.key}")
+    private String apiKey;
 
     @Value("${app.email.recipient}")
     private String recipientEmail;
 
+    @Value("${app.email.from}")
+    private String fromEmail;
+
     @Value("${app.upload.cv-directory}")
     private String uploadDirectory;
 
-    // ASÍNCRONO - No bloquea al usuario
     @Async
     public CompletableFuture<Boolean> sendJobApplicationEmailAsync(JobApplicationDTO application, String savedFileName) {
         boolean result = sendJobApplicationEmail(application, savedFileName);
         return CompletableFuture.completedFuture(result);
     }
 
-    // SÍNCRONO - Solo para uso interno
     public boolean sendJobApplicationEmail(JobApplicationDTO application, String savedFileName) {
-        boolean emailSent = false;
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            // Configurar emails
+            Email from = new Email(fromEmail, "Arendel - Sistema de RRHH");
+            Email to = new Email(recipientEmail);
+            String subject = "Nueva Solicitud de Empleo - " + application.getNombre();
 
-            // Configurar destinatarios
-            helper.setTo(recipientEmail);
-            helper.setSubject("Nueva Solicitud de Empleo - " + application.getNombre());
+            // Contenido HTML del email
+            Content content = new Content("text/html", buildEmailContent(application));
 
-            // Crear contenido HTML del email
-            String htmlContent = buildEmailContent(application);
-            helper.setText(htmlContent, true);
+            // Crear mail
+            Mail mail = new Mail(from, subject, to, content);
 
             // Adjuntar CV si existe
             if (savedFileName != null && !savedFileName.isEmpty()) {
-                Path cvPath = Paths.get(uploadDirectory, savedFileName);
-                File cvFile = cvPath.toFile();
-
-                if (cvFile.exists()) {
-                    FileSystemResource file = new FileSystemResource(cvFile);
-                    helper.addAttachment("CV_" + application.getNombre() + ".pdf", file);
-                }
+                attachCV(mail, savedFileName, application.getNombre());
             }
 
             // Enviar email
-            mailSender.send(message);
-            logger.info("Email enviado exitosamente para solicitud de: {}", application.getEmail());
-            emailSent = true;
+            SendGrid sg = new SendGrid(apiKey);
+            Request request = new Request();
 
-        } catch (MessagingException e) {
-            logger.error("Error al enviar email para solicitud de: {}", application.getEmail(), e);
-            return false;
+            try {
+                request.setMethod(Method.POST);
+                request.setEndpoint("mail/send");
+                request.setBody(mail.build());
+
+                Response response = sg.api(request);
+
+                if (response.getStatusCode() >= 200 && response.getStatusCode() < 300) {
+                    logger.info("Email enviado exitosamente via SendGrid para: {}", application.getEmail());
+                    return true;
+                } else {
+                    logger.error("Error enviando email via SendGrid. Status: {}, Body: {}",
+                            response.getStatusCode(), response.getBody());
+                    return false;
+                }
+
+            } catch (IOException e) {
+                logger.error("Error de conexión con SendGrid API", e);
+                return false;
+            }
+
         } catch (Exception e) {
-            logger.error("Error inesperado al enviar email", e);
+            logger.error("Error inesperado enviando email via SendGrid", e);
             return false;
-        }finally {
-
-            // Eliminar archivo después de enviar el correo (si existe)
+        } finally {
+            // Eliminar archivo después de enviar
             if (savedFileName != null && !savedFileName.isEmpty()) {
                 deleteFile(savedFileName);
             }
         }
-        return emailSent;
     }
 
-    /**
-     * Elimina el archivo del servidor
-     */
+    private void attachCV(Mail mail, String savedFileName, String candidateName) {
+        try {
+            Path cvPath = Paths.get(uploadDirectory, savedFileName);
+            File cvFile = cvPath.toFile();
+
+            if (cvFile.exists()) {
+                byte[] fileContent = Files.readAllBytes(cvPath);
+                String encodedFile = Base64.getEncoder().encodeToString(fileContent);
+
+                Attachments attachments = new Attachments();
+                attachments.setContent(encodedFile);
+                attachments.setType("application/pdf");
+                attachments.setFilename("CV_" + candidateName.replaceAll("[^a-zA-Z0-9]", "_") + ".pdf");
+                attachments.setDisposition("attachment");
+
+                mail.addAttachments(attachments);
+                logger.info("CV adjuntado correctamente: {}", savedFileName);
+            }
+        } catch (Exception e) {
+            logger.error("Error adjuntando CV: {}", savedFileName, e);
+        }
+    }
+
     private void deleteFile(String fileName) {
         try {
             Path filePath = Paths.get(uploadDirectory, fileName);
@@ -119,7 +150,7 @@ public class EmailService {
                 .append("<li><strong>Email:</strong> ").append(application.getEmail()).append("</li>")
                 .append("<li><strong>Teléfono:</strong> ").append(application.getTelefono()).append("</li>")
                 .append("<li><strong>Tipo de Contrato Solicitado:</strong> ").append(getContratoDescription(application.getContrato())).append("</li>")
-                .append("<li><strong>Localidad:</strong>").append(application.getLocalidad()).append("</li>")
+                .append("<li><strong>Localidad:</strong> ").append(application.getLocalidad()).append("</li>")
                 .append("</ul>");
 
         if (application.getComentarios() != null && !application.getComentarios().trim().isEmpty()) {
@@ -152,24 +183,34 @@ public class EmailService {
         return CompletableFuture.completedFuture(result);
     }
 
-    // Enviar email de confirmación al candidato
     public boolean sendConfirmationEmail(JobApplicationDTO application) {
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            Email from = new Email(fromEmail, "Arendel - Recursos Humanos");
+            Email to = new Email(application.getEmail());
+            String subject = "Confirmación de Solicitud de Empleo - Arendel";
 
-            helper.setTo(application.getEmail());
-            helper.setSubject("Confirmación de Solicitud de Empleo - Arendel");
+            Content content = new Content("text/html", buildConfirmationContent(application));
+            Mail mail = new Mail(from, subject, to, content);
 
-            String htmlContent = buildConfirmationContent(application);
-            helper.setText(htmlContent, true);
+            SendGrid sg = new SendGrid(apiKey);
+            Request request = new Request();
 
-            mailSender.send(message);
-            logger.info("Email de confirmación enviado a: {}", application.getEmail());
-            return true;
+            request.setMethod(Method.POST);
+            request.setEndpoint("mail/send");
+            request.setBody(mail.build());
 
-        } catch (MessagingException e) {
-            logger.error("Error al enviar email de confirmación a: {}", application.getEmail(), e);
+            Response response = sg.api(request);
+
+            if (response.getStatusCode() >= 200 && response.getStatusCode() < 300) {
+                logger.info("Email de confirmación enviado via SendGrid a: {}", application.getEmail());
+                return true;
+            } else {
+                logger.error("Error enviando confirmación via SendGrid. Status: {}", response.getStatusCode());
+                return false;
+            }
+
+        } catch (Exception e) {
+            logger.error("Error enviando email de confirmación via SendGrid a: {}", application.getEmail(), e);
             return false;
         }
     }
@@ -181,7 +222,7 @@ public class EmailService {
                 "<h2 style='color: #333;'>¡Gracias por tu interés en Arendel!</h2>" +
                 "<p>Estimado/a <strong>" + application.getNombre() + "</strong>,</p>" +
                 "<p>Hemos recibido correctamente tu solicitud de empleo para el puesto de <strong>" +
-                getContratoDescription(application.getContrato()) + " en "+ application.getLocalidad() +"</strong>.</p>" +
+                getContratoDescription(application.getContrato()) + " en " + application.getLocalidad() + "</strong>.</p>" +
                 "<p>Nuestro equipo de Recursos Humanos revisará tu candidatura y te contactaremos en caso de que tu perfil encaje con nuestras necesidades actuales.</p>" +
                 "<p>¡Gracias por considerar Arendel como tu próximo destino profesional!</p>" +
                 "<br>" +

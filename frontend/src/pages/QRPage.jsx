@@ -11,7 +11,7 @@ const QRPage = () => {
 
     useEffect(() => {
         // 🎯 ¡¡¡CAMBIA SOLO ESTA LÍNEA PARA ACTUALIZAR EL DESTINO!!!
-        const REDIRECT_URL = 'http://localhost/'
+        const REDIRECT_URL = import.meta.env.VITE_QR_REDIRECT_URL
         
         setIsVisible(true)
         

@@ -24,8 +24,11 @@ COPY *.config.js ./
 # Variables de entorno para build
 ARG VITE_API_URL=http://localhost:8080
 ARG VITE_APP_ENV=production
+ARG VITE_QR_REDIRECT_URL=https://arendel.es/
+
 ENV VITE_API_URL=$VITE_API_URL
 ENV VITE_APP_ENV=$VITE_APP_ENV
+ENV VITE_QR_REDIRECT_URL=$VITE_QR_REDIRECT_URL
 
 # Construir aplicación para producción
 RUN pnpm run build

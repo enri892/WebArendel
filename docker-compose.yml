@@ -8,9 +8,13 @@ services:
     container_name: arendel-backend
     environment:
       SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-production}
-      EMAIL_USERNAME: ${EMAIL_USERNAME}
-      EMAIL_PASSWORD: ${EMAIL_PASSWORD}
+      # SendGrid configuration
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+      EMAIL_FROM: ${EMAIL_FROM}
       RECIPIENT_EMAIL: ${RECIPIENT_EMAIL}
+      
+      #SMTP de Gmail - ya no lo usamos
+      #EMAIL_PASSWORD: ${EMAIL_PASSWORD}
       SERVER_PORT: 8080
       JAVA_OPTS: ${JAVA_OPTS:--Xmx1g -Xms512m}
     ports:
@@ -37,6 +41,7 @@ services:
       args:
         VITE_API_URL: ${VITE_API_URL}
         VITE_APP_ENV: ${VITE_APP_ENV:-production}
+        VITE_QR_REDIRECT_URL: ${VITE_QR_REDIRECT_URL}
     container_name: arendel-frontend
     environment:
       API_URL: http://backend:8080

@@ -27,7 +27,7 @@ public class JobApplicationService {
     private String uploadDirectory;
 
     @Autowired
-    private EmailService emailService;
+    private SendGridEmailService sendGridEmailService;
 
     public boolean processJobApplication(JobApplicationDTO application) {
         String savedFileName = null;
@@ -39,8 +39,8 @@ public class JobApplicationService {
             }
 
             // 2. Enviar emails de forma ASÍNCRONA
-            CompletableFuture<Boolean> mainEmailFuture = emailService.sendJobApplicationEmailAsync(application, savedFileName);
-            CompletableFuture<Boolean> confirmationEmailFuture = emailService.sendConfirmationEmailAsync(application);
+            CompletableFuture<Boolean> mainEmailFuture = sendGridEmailService.sendJobApplicationEmailAsync(application, savedFileName);
+            CompletableFuture<Boolean> confirmationEmailFuture = sendGridEmailService.sendConfirmationEmailAsync(application);
 
             // 3. El usuario recibe respuesta inmediata (no esperamos a que terminen los emails)
             logger.info("Solicitud procesada exitosamente para: {} - Emails enviándose en segundo plano", application.getEmail());
