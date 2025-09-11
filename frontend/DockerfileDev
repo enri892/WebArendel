@@ -1,0 +1,24 @@
+# frontend/DockerfileDev - SÚPER SIMPLE Y RÁPIDO
+
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Instalar pnpm
+RUN npm install -g pnpm
+
+# Copiar todo (más simple)
+COPY . .
+
+# Instalar dependencias
+RUN pnpm install
+
+# Variables básicas
+ENV NODE_ENV=development
+ENV VITE_API_URL=http://localhost:8080
+
+# Puerto
+EXPOSE 5173
+
+# Ejecutar Vite
+CMD ["pnpm", "dev", "--host", "0.0.0.0"]

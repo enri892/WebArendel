@@ -1,0 +1,11 @@
+# .envDev SOLO PARA DESARROLLO
+# Backend
+SPRING_PROFILES_ACTIVE=development
+SENDGRID_API_KEY=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
+EMAIL_FROM=noreply@arendel.es
+RECIPIENT_EMAIL=vladutorza64@gmail.com
+
+# Frontend
+VITE_API_URL=http://localhost:8080
+VITE_APP_ENV=development
+VITE_QR_REDIRECT_URL=http://localhost:5173

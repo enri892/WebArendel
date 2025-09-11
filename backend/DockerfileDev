@@ -1,0 +1,32 @@
+# DockerfileDev - SOLO PARA DESARROLLO
+
+FROM openjdk:21-jdk-slim
+
+# Solo curl para health check
+RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copiar todo Maven
+COPY pom.xml mvnw ./
+COPY .mvn .mvn
+RUN chmod +x ./mvnw
+
+# Descargar dependencias
+RUN ./mvnw dependency:go-offline -B
+
+# Copiar código y compilar
+COPY src ./src
+RUN ./mvnw clean package -DskipTests
+
+# Crear directorios
+RUN mkdir -p uploads/cv logs
+
+# Puertos
+EXPOSE 8080 5005
+
+# Variables básicas
+ENV SPRING_PROFILES_ACTIVE=development
+
+# Ejecutar
+CMD ["java", "-jar", "target/*.jar"]

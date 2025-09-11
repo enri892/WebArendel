@@ -1,0 +1,34 @@
+# docker-composeDev.yml - SIMPLE, RÁPIDO, FUNCIONAL
+
+services:
+  # Backend Spring Boot - SIMPLE
+  backend:
+    build:
+      context: ./backend
+      dockerfile: DockerfileDev
+    container_name: arendel-backend-dev
+    environment:
+      SPRING_PROFILES_ACTIVE: development
+      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
+      EMAIL_FROM: ${EMAIL_FROM}
+      RECIPIENT_EMAIL: ${RECIPIENT_EMAIL}
+      JAVA_OPTS: -Xmx512m -Xms256m
+    ports:
+      - "8080:8080"
+      - "5005:5005"
+    restart: unless-stopped
+
+  # Frontend React - SIMPLE
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: DockerfileDev
+    container_name: arendel-frontend-dev
+    environment:
+      NODE_ENV: development
+      VITE_API_URL: http://localhost:8080
+      VITE_APP_ENV: development
+      VITE_QR_REDIRECT_URL: http://localhost:5173
+    ports:
+      - "5173:5173"
+    restart: unless-stopped

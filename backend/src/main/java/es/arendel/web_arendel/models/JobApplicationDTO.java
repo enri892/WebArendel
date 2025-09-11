@@ -59,7 +59,7 @@ public class JobApplicationDTO {
     private String comentarios;
 
     // Validación CV.PDF (OBLIGATORIO)
-    @NotBlank(message = "El CV es obligatorio")
+    @NotNull(message = "El CV es obligatorio")
     @ValidJobPDF(maxSize = 5242880) // 5MB
     private MultipartFile cv;
 
