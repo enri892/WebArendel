@@ -8,7 +8,8 @@ import {
   MessageCircle,
   Calendar,
   CheckSquare,
-  ToggleLeft
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 import HeaderForm from '../ui/HeaderForm.jsx';
 import FormInput from '../ui/FormInput.jsx';
@@ -28,10 +29,9 @@ const contratoOptions = [
 ];
 
 const disponibilidadOptions = [
-  { value: 'dia', label: 'Día' },
+  { value: 'manana', label: 'Mañana' },
   { value: 'tarde', label: 'Tarde' },
-  { value: 'noche-plus', label: 'Noche (Plus)' },
-  { value: 'indiferente', label: 'Indiferente' }
+  { value: 'noche-plus', label: 'Noche (Plus)' }
 ];
 
 const localidadOptions = [
@@ -65,7 +65,7 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
     telefono: '',
     email: '',
     contrato: '',
-    disponibilidad: '',
+    disponibilidad: [],
     localidad: '',
     zonas: [],
     comentarios: ''
@@ -75,6 +75,8 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
   const [file, setFile] = useState(null);
   const [fileName, setFileName] = useState('');
   const [showContractMessage, setShowContractMessage] = useState(false);
+  const [showZonasDropdown, setShowZonasDropdown] = useState(false);
+  const [showDisponibilidadDropdown, setShowDisponibilidadDropdown] = useState(false);
 
   const responseRef = useRef(null);
   const contractMessageTimer = useRef(null);
@@ -88,7 +90,8 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
         setFormData(prev => ({
           ...prev,
           ...parsedData,
-          zonas: parsedData.zonas || []
+          zonas: parsedData.zonas || [],
+          disponibilidad: parsedData.disponibilidad || []
         }));
       } catch (error) {
         console.error('Error cargando datos temporales:', error);
@@ -158,6 +161,7 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
         ...prev,
         zonas: []
       }));
+      setShowZonasDropdown(false);
     }
   }, [formData.localidad]);
 
@@ -202,14 +206,23 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
     }));
   };
 
-  const handleSelectAllZonas = () => {
-    const zonasDisponibles = zonasPorLocalidad[formData.localidad] || [];
-    const allZonasValues = zonasDisponibles.map(z => z.value);
-    
+  const handleDisponibilidadChange = (disponibilidad) => {
     setFormData(prev => ({
       ...prev,
-      zonas: prev.zonas.length === allZonasValues.length ? [] : allZonasValues
+      disponibilidad: prev.disponibilidad.includes(disponibilidad)
+        ? prev.disponibilidad.filter(d => d !== disponibilidad)
+        : [...prev.disponibilidad, disponibilidad]
     }));
+  };
+
+  const toggleZonasDropdown = () => {
+    setShowZonasDropdown(!showZonasDropdown);
+    if (showDisponibilidadDropdown) setShowDisponibilidadDropdown(false);
+  };
+
+  const toggleDisponibilidadDropdown = () => {
+    setShowDisponibilidadDropdown(!showDisponibilidadDropdown);
+    if (showZonasDropdown) setShowZonasDropdown(false);
   };
 
   const handleFileChange = (e) => {
@@ -246,10 +259,10 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const requiredFields = ['nombre', 'telefono', 'email', 'contrato', 'disponibilidad', 'localidad'];
+    const requiredFields = ['nombre', 'telefono', 'email', 'contrato', 'localidad'];
     const emptyFields = requiredFields.filter(field => !formData[field]);
 
-    if (emptyFields.length > 0 || !file || formData.zonas.length === 0) {
+    if (emptyFields.length > 0 || !file || formData.zonas.length === 0 || formData.disponibilidad.length === 0) {
       const errors = {};
 
       emptyFields.forEach(field => {
@@ -262,6 +275,10 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
 
       if (formData.zonas.length === 0) {
         errors['zonas'] = 'Debes seleccionar al menos una zona';
+      }
+
+      if (formData.disponibilidad.length === 0) {
+        errors['disponibilidad'] = 'Debes seleccionar al menos una disponibilidad';
       }
 
       setApiResponse({
@@ -291,7 +308,7 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
       formDataToSend.append('telefono', formData.telefono);
       formDataToSend.append('email', formData.email);
       formDataToSend.append('contrato', formData.contrato);
-      formDataToSend.append('disponibilidad', formData.disponibilidad);
+      formDataToSend.append('disponibilidad', formData.disponibilidad.join(','));
       formDataToSend.append('localidad', formData.localidad);
       formDataToSend.append('zonas', formData.zonas.join(','));
       formDataToSend.append('comentarios', formData.comentarios || '');
@@ -304,9 +321,9 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
         method: 'POST',
         body: formDataToSend,
       });
-
+      console.log(formDataToSend)
       const result = await response.json();
-
+      console.log('Respuesta de la API:', result);
       if (result.message && result.message.includes('HV000028')) {
         setApiResponse({
           success: false,
@@ -327,13 +344,15 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
           telefono: '',
           email: '',
           contrato: '',
-          disponibilidad: '',
+          disponibilidad: [],
           localidad: '',
           zonas: [],
           comentarios: ''
         });
         setFile(null);
         setFileName('');
+        setShowZonasDropdown(false);
+        setShowDisponibilidadDropdown(false);
         localStorage.removeItem('arendel_form_temp');
 
         const fileInput = document.getElementById('curriculum-input');
@@ -357,28 +376,26 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
   };
 
   const zonasDisponibles = zonasPorLocalidad[formData.localidad] || [];
-  const allZonasSelected = zonasDisponibles.length > 0 && 
-    zonasDisponibles.every(z => formData.zonas.includes(z.value));
 
   return (
-    <section 
-      id="contacto" 
+    <section
+      id="contacto"
       className="relative py-20 lg:py-28 overflow-hidden bg-gradient-to-br from-slate-950 via-blue-950 to-indigo-950"
     >
       {/* Background Effects */}
       <BackgroundEffects />
 
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* Header */}
-        <HeaderForm 
-          isVisible={isVisible} 
-          showContractMessage={showContractMessage} 
-          formData={formData} 
+        <HeaderForm
+          isVisible={isVisible}
+          showContractMessage={showContractMessage}
+          formData={formData}
         />
 
         {/* Mensaje de respuesta de la API */}
-        <ResponseMessage 
+        <ResponseMessage
           ref={responseRef}
           apiResponse={apiResponse}
           isVisible={isVisible}
@@ -387,7 +404,7 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
 
         {/* Form Card */}
         <FormCard isVisible={isVisible}>
-          
+
           {/* Primera fila: Nombre y Teléfono */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FormInput
@@ -400,7 +417,7 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
               placeholder="Tu nombre completo"
               error={apiResponse?.errors?.nombre}
             />
-            
+
             <FormInput
               icon={Phone}
               iconColor="text-blue-400"
@@ -443,18 +460,65 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
               highlightSelected={true}
               selectedContract={selectedContract}
             />
-            
-            <FormSelect
-              icon={Calendar}
-              iconColor="text-yellow-400"
-              label="Disponibilidad"
-              field="disponibilidad"
-              value={formData.disponibilidad}
-              onChange={handleInputChange}
-              options={disponibilidadOptions}
-              placeholder="Selecciona tu disponibilidad"
-              error={apiResponse?.errors?.disponibilidad}
-            />
+
+            {/* Disponibilidad con desplegable */}
+            <div className="space-y-3 relative">
+              <label className="flex items-center gap-2 text-white font-semibold text-sm uppercase tracking-wider">
+                <Calendar className="h-4 w-4 text-yellow-400" />
+                Disponibilidad *
+              </label>
+
+              <button
+                type="button"
+                onClick={toggleDisponibilidadDropdown}
+                className="w-full px-4 py-4 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl text-white hover:bg-white/15 transition-all duration-300 flex items-center justify-between"
+              >
+                <span className="text-white/80">
+                  {formData.disponibilidad.length === 0
+                    ? "Selecciona tus disponibilidades"
+                    : `${formData.disponibilidad.length} seleccionada(s)`
+                  }
+                </span>
+                {showDisponibilidadDropdown ? (
+                  <ChevronUp className="h-4 w-4 text-yellow-400" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-yellow-400" />
+                )}
+              </button>
+
+              {/* Desplegable de disponibilidad */}
+              {showDisponibilidadDropdown && (
+                <div className="absolute left-0 right-0 z-50 mt-1 bg-white/10 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl overflow-hidden">
+                  <div className="p-4 space-y-3">
+                    <div className="flex justify-between items-center mb-3">
+                      <span className="text-white font-medium text-sm">Selecciona tus disponibilidades</span>
+                    </div>
+                    <div className="d-flex flex-wrap gap-2">
+                      {disponibilidadOptions.map(disponibilidad => (
+                        <label
+                          key={disponibilidad.value}
+                          className="w-100 flex items-center gap-3 p-3 bg-slate-700/80 hover:bg-slate-600/60 rounded-lg cursor-pointer transition-all duration-200 border border-slate-600/50 hover:border-cyan-400/70 group"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={formData.disponibilidad.includes(disponibilidad.value)}
+                            onChange={() => handleDisponibilidadChange(disponibilidad.value)}
+                            className="w-4 h-4 text-cyan-500 bg-slate-800 border-cyan-400/60 rounded focus:ring-cyan-400 focus:ring-2 focus:ring-offset-0"
+                          />
+                          <span className="pl-2 text-white text-sm font-medium group-hover:text-cyan-100 transition-colors select-none">
+                            {disponibilidad.label}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {apiResponse?.errors?.disponibilidad && (
+                <p className="mt-1 text-sm text-red-400">{apiResponse.errors.disponibilidad}</p>
+              )}
+            </div>
           </div>
 
           {/* Localidad y Zonas */}
@@ -470,52 +534,71 @@ const FormularioSection = ({ selectedContract, onContractChange }) => {
               placeholder="Selecciona tu localidad"
               error={apiResponse?.errors?.localidad}
             />
-            
-            {/* Zonas con checkboxes */}
-            <div className="space-y-3">
+
+            {/* Zonas con desplegable */}
+            <div className="space-y-3 relative">
               <label className="flex items-center gap-2 text-white font-semibold text-sm uppercase tracking-wider">
                 <CheckSquare className="h-4 w-4 text-cyan-400" />
                 Zonas de trabajo *
               </label>
-              
+
               {!formData.localidad ? (
-                <div className="p-4 bg-white/5 backdrop-blur-xl border border-white/20 rounded-2xl">
-                  <p className="text-white/60 text-sm">Debe seleccionar una localidad primero</p>
+                <div className="text-align-center p-3 bg-white/5 backdrop-blur-xl border border-white/20 ">
+                  <p className="text-white/60 m-0 p-0">Selecciona una localidad</p>
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {/* Botón Seleccionar Todo */}
+                <>
                   <button
                     type="button"
-                    onClick={handleSelectAllZonas}
-                    className="w-full px-4 py-2 bg-gradient-to-r from-cyan-600/20 to-blue-600/20 hover:from-cyan-600/30 hover:to-blue-600/30 border border-cyan-400/30 rounded-xl text-cyan-400 font-medium text-sm transition-all duration-300 flex items-center justify-center gap-2"
+                    onClick={toggleZonasDropdown}
+                    className="w-full px-4 py-4 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl text-white hover:bg-white/15 transition-all duration-300 flex items-center justify-between"
                   >
-                    <ToggleLeft className={`h-4 w-4 transition-transform ${allZonasSelected ? 'rotate-180' : ''}`} />
-                    {allZonasSelected ? 'Deseleccionar todo' : 'Seleccionar todo'}
+                    <span className="text-white/80">
+                      {formData.zonas.length === 0
+                        ? "Ver zonas disponibles"
+                        : `${formData.zonas.length} zona(s) seleccionada(s)`
+                      }
+                    </span>
+                    {showZonasDropdown ? (
+                      <ChevronUp className="h-4 w-4 text-cyan-400" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4 text-cyan-400" />
+                    )}
                   </button>
-                  
-                  {/* Checkboxes de zonas */}
-                  <div className="grid grid-cols-1 gap-2 p-4 bg-white/5 backdrop-blur-xl border border-white/20 rounded-2xl">
-                    {zonasDisponibles.map(zona => (
-                      <label
-                        key={zona.value}
-                        className="flex items-center gap-3 p-2 hover:bg-white/10 rounded-lg cursor-pointer transition-colors"
-                      >
-                        <input
-                          type="checkbox"
-                          checked={formData.zonas.includes(zona.value)}
-                          onChange={() => handleZonaChange(zona.value)}
-                          className="w-5 h-5 text-cyan-600 bg-white/10 border-white/30 rounded focus:ring-cyan-500 focus:ring-2"
-                        />
-                        <span className="text-white text-sm">{zona.label}</span>
-                      </label>
-                    ))}
-                  </div>
-                  
-                  {apiResponse?.errors?.zonas && (
-                    <p className="mt-1 text-sm text-red-400">{apiResponse.errors.zonas}</p>
+
+                  {/* Desplegable de zonas */}
+                  {showZonasDropdown && (
+                    <div className="absolute left-0 right-0 z-50 mt-1 bg-white/10 backdrop-blur-xl border border-white/30 rounded-2xl shadow-2xl overflow-hidden">
+                      <div className="p-4 space-y-3">
+                        <div className="flex justify-between items-center mb-3">
+                          <span className="text-white font-medium text-sm">Selecciona tus zonas</span>
+                        </div>
+                        <div className="d-flex flex-wrap gap-2">
+                          {zonasDisponibles.map(zona => (
+                            <label
+                              key={zona.value}
+                              className="w-100 flex items-center gap-3 p-3 bg-slate-700/80 hover:bg-slate-600/60 rounded-lg cursor-pointer transition-all duration-200 border border-slate-600/50 hover:border-cyan-400/70 group"
+                            >
+                              <input
+                                type="checkbox"
+                                checked={formData.zonas.includes(zona.value)}
+                                onChange={() => handleZonaChange(zona.value)}
+                                className="w-4 h-4 text-cyan-500 bg-slate-800 border-cyan-400/60 rounded focus:ring-cyan-400 focus:ring-2 focus:ring-offset-0"
+                              />
+                              <span className="pl-2 text-white text-sm font-medium group-hover:text-cyan-100 transition-colors select-none">
+                                {zona.label}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   )}
-                </div>
+                </>
+              )}
+
+              {apiResponse?.errors?.zonas && (
+                <p className="mt-1 text-sm text-red-400">{apiResponse.errors.zonas}</p>
               )}
             </div>
           </div>

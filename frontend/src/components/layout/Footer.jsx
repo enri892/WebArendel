@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { 
-  Phone, Mail, MapPin, Facebook, Instagram, Linkedin, Twitter,
+  Phone, Mail, MapPin, Facebook, Instagram, Linkedin, X,
   ArrowUp, Heart
 } from 'lucide-react';
 
@@ -12,10 +12,34 @@ const Footer = () => {
   };
 
   const socialLinks = [
-    { icon: Facebook, name: 'Facebook', color: 'hover:text-blue-500' },
-    { icon: Instagram, name: 'Instagram', color: 'hover:text-pink-500' },
-    { icon: Linkedin, name: 'LinkedIn', color: 'hover:text-blue-600' },
-    { icon: Twitter, name: 'Twitter', color: 'hover:text-sky-400' }
+    { 
+      icon: Facebook, 
+      name: 'Facebook', 
+      color: 'hover:text-blue-500', 
+      bgColor: 'hover:bg-blue-500/20',
+      url: 'https://www.facebook.com/profile.php?id=61580432650028'
+    },
+    { 
+      icon: Instagram, 
+      name: 'Instagram', 
+      color: 'hover:text-pink-500', 
+      bgColor: 'hover:bg-pink-500/20',
+      url: 'https://www.instagram.com/arendel.es/'
+    },
+    { 
+      icon: Linkedin, 
+      name: 'LinkedIn', 
+      color: 'hover:text-blue-600', 
+      bgColor: 'hover:bg-blue-600/20',
+      url: 'https://www.linkedin.com/in/arendel-arendel-487b1b383/'
+    },
+    { 
+      icon: X, 
+      name: 'X (Twitter)', 
+      color: 'hover:text-gray-300', 
+      bgColor: 'hover:bg-gray-300/20',
+      url: 'https://x.com/ArendelMadrid'
+    }
   ];
 
   return (
@@ -62,16 +86,6 @@ const Footer = () => {
           <div>
             <h4 className="text-xl font-bold mb-6 text-white">Contacto</h4>
             <div className="space-y-4">
-              {/* Teléfono */}
-              <div className="group flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all duration-300">
-                <div className="p-2 bg-blue-800/20 rounded-lg group-hover:bg-blue-800/30 transition-colors duration-300">
-                  <Phone className="h-4 w-4 text-blue-400" />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400 uppercase tracking-wider">Teléfono</p>
-                  <p className="text-white font-medium">+34 900 123 456</p>
-                </div>
-              </div>
               {/* Email */}
               <div className="group flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 transition-all duration-300">
                 <div className="p-2 bg-emerald-800/20 rounded-lg group-hover:bg-emerald-800/30 transition-colors duration-300">
@@ -79,7 +93,7 @@ const Footer = () => {
                 </div>
                 <div>
                   <p className="text-xs text-gray-400 uppercase tracking-wider">Email</p>
-                  <p className="text-white font-medium">reclutamiento@arendel.com</p>
+                  <p className="text-white font-medium">info@arendel.es</p>
                 </div>
               </div>
               {/* Ubicación */}
@@ -114,23 +128,35 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Social Media */}
+          {/* Social Media - Con Enlaces Reales */}
           <div>
             <h4 className="text-xl font-bold mb-6 text-white">Síguenos</h4>
             <p className="text-gray-400 text-sm mb-6 leading-relaxed">
               Mantente conectado y descubre las últimas oportunidades laborales.
             </p>
-            <div className="space-y-3">
+            
+            {/* Iconos en fila horizontal con enlaces reales */}
+            <div className="flex flex-wrap gap-3">
               {socialLinks.map((social, index) => (
                 <a
                   key={index}
-                  href="#"
-                  className="group flex items-center gap-3 p-3 bg-white/5 hover:bg-white/10 rounded-lg border border-white/10 hover:border-white/20 transition-all duration-300"
+                  href={social.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={social.name}
+                  onMouseEnter={() => setHoveredSocial(index)}
+                  onMouseLeave={() => setHoveredSocial(null)}
+                  className={`group relative p-3 bg-white/5 hover:bg-white/10 rounded-lg border border-white/10 hover:border-white/20 transition-all duration-300 hover:scale-110 hover:-translate-y-1 ${social.bgColor}`}
                 >
-                  <div className="p-2 rounded-lg bg-white/10 group-hover:bg-white/20 transition-all duration-300">
-                    <social.icon className={`h-4 w-4 text-gray-400 transition-colors duration-300 ${social.color}`} />
-                  </div>
-                  <span className="text-sm font-medium text-gray-400 group-hover:text-white transition-colors duration-300">{social.name}</span>
+                  <social.icon className={`h-5 w-5 text-gray-400 transition-all duration-300 ${social.color}`} />
+                  
+                  {/* Tooltip que aparece en hover */}
+                  {hoveredSocial === index && (
+                    <div className="absolute -top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap border border-white/20 z-20">
+                      {social.name}
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-2 border-r-2 border-t-2 border-l-transparent border-r-transparent border-t-gray-900"></div>
+                    </div>
+                  )}
                 </a>
               ))}
             </div>
@@ -141,12 +167,12 @@ const Footer = () => {
         <div className="mt-16 pt-8 border-t border-white/10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-gray-400 text-sm">
-              <span>&copy; 2024 Arendel. Todos los derechos reservados.</span>
+              <span>&copy; 2025 Arendel. Todos los derechos reservados.</span>
             </div>
             <div className="flex items-center gap-2 text-gray-400 text-sm">
               <span>Hecho con</span>
               <Heart className="h-4 w-4 text-red-500 fill-current animate-pulse" />
-              <span>para nuestro equipo</span>
+              <span>por nuestro equipo</span>
             </div>
           </div>
         </div>
