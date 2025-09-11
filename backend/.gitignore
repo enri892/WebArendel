@@ -25,8 +25,9 @@ spring-boot-devtools.properties
 Thumbs.db
 
 # Configuración sensible
-*.env
+*.env*
 *.pem
 application.properties
+application-development.properties
 application.yml
 *.keystore
